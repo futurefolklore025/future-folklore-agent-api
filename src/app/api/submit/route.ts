@@ -21,18 +21,25 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
-    // TODO: Replace this with actual n8n webhook call
-    // For now, we'll simulate a successful response
-    // const webhookResponse = await fetch('YOUR_N8N_WEBHOOK_URL', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(body),
-    // });
+    // Forward to n8n webhook
+    const webhookResponse = await fetch('https://futurefolklore025.app.n8n.cloud/webhook-test/submit-prompt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
 
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!webhookResponse.ok) {
+      console.error('n8n webhook failed:', webhookResponse.status, webhookResponse.statusText);
+      return NextResponse.json<ApiResponse>({
+        success: false,
+        message: 'Failed to trigger n8n workflow. Please try again.',
+      }, { status: 500 });
+    }
+
+    const webhookResult = await webhookResponse.json();
+    console.log('n8n webhook response:', webhookResult);
 
     return NextResponse.json<ApiResponse>({
       success: true,
